@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Your Composition — Marie Hartig Studio</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/worlds.css" />
+  <link rel="stylesheet" href="../css/cart.css" />
+  <style>
+    body.compose-page {
+      background: #f5f3ef;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .compose-layout {
+      display: flex;
+      height: calc(100vh - 64px);
+      margin-top: 64px;
+    }
+
+    /* ---- LEFT: Tattoo picker ---- */
+    .compose-picker {
+      width: 280px;
+      flex-shrink: 0;
+      background: #fff;
+      border-right: 1px solid rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .compose-picker-header {
+      padding: 1.4rem 1.4rem 1rem;
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+    }
+
+    .compose-picker-header h2 {
+      font-family: 'Velour', serif;
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #111;
+      margin: 0 0 0.3rem;
+    }
+
+    .compose-picker-header p {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      color: #aaa;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .compose-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 10px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .picker-thumb {
+      background: #f5f3ef;
+      border-radius: 3px;
+      aspect-ratio: 1/1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      border: 2px solid transparent;
+      transition: border-color 0.2s, transform 0.15s;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .picker-thumb:hover {
+      border-color: #bbb;
+      transform: scale(1.04);
+    }
+
+    .picker-thumb img {
+      width: 90%;
+      height: 90%;
+      object-fit: contain;
+      pointer-events: none;
+      filter: brightness(0.9);
+    }
+
+    .picker-thumb .picker-num {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.48rem;
+      letter-spacing: 0.08em;
+      color: #bbb;
+    }
+
+    /* ---- RIGHT: Canvas wall ---- */
+    .compose-canvas-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      gap: 1.4rem;
+      overflow: hidden;
+    }
+
+    .compose-canvas-label {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
+    .compose-canvas {
+      position: relative;
+      background: #faf9f7;
+      border: 1px solid rgba(0,0,0,0.1);
+      box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+      width: min(700px, calc(100vw - 340px));
+      height: min(480px, calc(100vh - 220px));
+      overflow: hidden;
+      cursor: default;
+    }
+
+    .canvas-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      gap: 0.5rem;
+    }
+
+    .canvas-hint-icon {
+      font-size: 1.8rem;
+      opacity: 0.15;
+    }
+
+    .canvas-hint-text {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #aaa;
+      opacity: 0.6;
+    }
+
+    /* Placed tattoos on canvas */
+    .placed-tattoo {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .placed-tattoo:active { cursor: grabbing; }
+
+    .placed-tattoo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      filter: brightness(0.9);
+    }
+
+    .placed-tattoo .tattoo-delete {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 18px;
+      height: 18px;
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      font-size: 0.6rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .placed-tattoo:hover .tattoo-delete { display: flex; }
+
+    /* ---- Bottom bar ---- */
+    .compose-footer {
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+    }
+
+    .compose-count {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #888;
+    }
+
+    .compose-clear-btn {
+      background: none;
+      border: 1px solid rgba(0,0,0,0.18);
+      padding: 0.6rem 1.2rem;
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #888;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .compose-clear-btn:hover { border-color: #111; color: #111; }
+
+    .compose-add-btn {
+      background: #6b6b6b;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 2rem;
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.2s;
+    }
+
+    .compose-add-btn:hover { background: #3a3a3a; }
+    .compose-add-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* Link from wall tattoos page */
+    .compose-link-banner {
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 0.9rem;
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      text-decoration: none;
+      display: block;
+      transition: background 0.2s;
+    }
+
+    .compose-link-banner:hover { background: #333; }
+
+    @media (max-width: 900px) {
+      body.compose-page { overflow: auto; }
+      .compose-layout { flex-direction: column; height: auto; }
+      .compose-picker { width: 100%; height: 200px; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.08); }
+      .compose-picker-grid { grid-template-columns: repeat(6, 1fr); }
+      .compose-canvas-wrap { padding: 1rem; }
+      .compose-canvas { width: 100%; height: 50vw; min-height: 260px; }
+    }
+  </style>
+</head>
+<body class="worlds-page compose-page">
+  <nav class="nav" aria-label="Main navigation">
+    <a class="nav-logo" href="../index.html">Marie's Painted Worlds</a>
+    <ul class="nav-links">
+      <li><a href="meet-marie.html">Meet Marie</a></li>
+      <li><a href="portfolio.html">Portfolio</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a href="process.html">Process</a></li>
+      <li><a href="contact.html">Connect</a></li>
+      <li>
+        <button class="cart-icon-btn" aria-label="Open cart">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+          Cart
+          <span class="cart-badge">0</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-drawer-header">
+      <h2>Your Cart</h2>
+      <button class="cart-close" id="cart-close">&#215; Close</button>
+    </div>
+    <div class="cart-drawer-items"></div>
+    <div class="cart-drawer-footer">
+      <div class="cart-total">
+        <span class="cart-total-label">Total</span>
+        <span class="cart-total-amount">€0.00</span>
+      </div>
+      <button class="cart-checkout-btn" onclick="alert('Stripe integration coming soon!')">Proceed to Checkout</button>
+    </div>
+  </div>
+
+  <div class="compose-layout">
+
+    <!-- LEFT: Picker -->
+    <div class="compose-picker">
+      <div class="compose-picker-header">
+        <h2>Choose Tattoos</h2>
+        <p>Drag onto your wall</p>
+      </div>
+      <div class="compose-picker-grid" id="picker-grid"></div>
+    </div>
+
+    <!-- RIGHT: Canvas -->
+    <div class="compose-canvas-wrap">
+      <div class="compose-canvas-label">Your Wall</div>
+
+      <div class="compose-canvas" id="compose-canvas">
+        <div class="canvas-hint" id="canvas-hint">
+          <div class="canvas-hint-icon">🖼</div>
+          <div class="canvas-hint-text">Drag tattoos here to build your composition</div>
+        </div>
+      </div>
+
+      <div class="compose-footer">
+        <span class="compose-count" id="compose-count">0 tattoos placed</span>
+        <button class="compose-clear-btn" onclick="clearCanvas()">Clear</button>
+        <button class="compose-add-btn" id="add-composition-btn" onclick="addCompositionToCart()" disabled>
+          Add Composition to Cart
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="../js/cart.js"></script>
+  <script>
+    const TOTAL = 28;
+    const BASE  = '../assets/images/wall tattoos no bg/Tattoo';
+    const PRICE = 45.00;
+    const COMPOSITION_PRICE = 45.00; // per tattoo in composition
+
+    const canvas    = document.getElementById('compose-canvas');
+    const hint      = document.getElementById('canvas-hint');
+    const countEl   = document.getElementById('compose-count');
+    const addBtn    = document.getElementById('add-composition-btn');
+    const pickerGrid = document.getElementById('picker-grid');
+
+    let placed = []; // { id, src, el }
+
+    // ---- Build picker thumbnails ----
+    for (let i = 1; i <= TOTAL; i++) {
+      const src = `${BASE}${i}.png`;
+      const thumb = document.createElement('div');
+      thumb.className = 'picker-thumb';
+      thumb.draggable = true;
+      thumb.dataset.src = src;
+      thumb.dataset.id  = i;
+      thumb.innerHTML = `
+        <img src="${src}" alt="Tattoo ${i}" loading="lazy" />
+        <span class="picker-num">${i}</span>
+      `;
+
+      // Desktop drag
+      thumb.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('tattoo-src', src);
+        e.dataTransfer.setData('tattoo-id', i);
+        e.dataTransfer.effectAllowed = 'copy';
+      });
+
+      // Mobile / touch — clone and drag
+      thumb.addEventListener('touchstart', handleTouchStart, { passive: false });
+
+      pickerGrid.appendChild(thumb);
+    }
+
+    // ---- Desktop drag onto canvas ----
+    canvas.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+
+    canvas.addEventListener('drop', e => {
+      e.preventDefault();
+      const src = e.dataTransfer.getData('tattoo-src');
+      const id  = e.dataTransfer.getData('tattoo-id');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left - 60;
+      const y = e.clientY - rect.top  - 60;
+      placeTattoo(src, id, clamp(x, 0, rect.width - 120), clamp(y, 0, rect.height - 120));
+    });
+
+    // ---- Touch drag ----
+    let touchClone = null;
+    let touchSrc   = null;
+    let touchId    = null;
+
+    function handleTouchStart(e) {
+      e.preventDefault();
+      const thumb = e.currentTarget;
+      touchSrc = thumb.dataset.src;
+      touchId  = thumb.dataset.id;
+
+      touchClone = document.createElement('img');
+      touchClone.src = touchSrc;
+      touchClone.style.cssText = `
+        position: fixed; width: 100px; height: 100px; object-fit: contain;
+        pointer-events: none; opacity: 0.8; z-index: 9999;
+        filter: brightness(0.9);
+      `;
+      document.body.appendChild(touchClone);
+      moveTouchClone(e.touches[0]);
+
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend',  handleTouchEnd);
+    }
+
+    function moveTouchClone(touch) {
+      if (!touchClone) return;
+      touchClone.style.left = (touch.clientX - 50) + 'px';
+      touchClone.style.top  = (touch.clientY - 50) + 'px';
+    }
+
+    function handleTouchMove(e) {
+      e.preventDefault();
+      moveTouchClone(e.touches[0]);
+    }
+
+    function handleTouchEnd(e) {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend',  handleTouchEnd);
+
+      if (touchClone) {
+        const touch = e.changedTouches[0];
+        const rect  = canvas.getBoundingClientRect();
+
+        // Check if dropped on canvas
+        if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+            touch.clientY >= rect.top  && touch.clientY <= rect.bottom) {
+          const x = touch.clientX - rect.left - 50;
+          const y = touch.clientY - rect.top  - 50;
+          placeTattoo(touchSrc, touchId, clamp(x, 0, rect.width - 120), clamp(y, 0, rect.height - 120));
+        }
+
+        touchClone.remove();
+        touchClone = null;
+      }
+    }
+
+    // ---- Place a tattoo on the canvas ----
+    function placeTattoo(src, id, x, y) {
+      hint.style.display = 'none';
+
+      const el = document.createElement('div');
+      el.className = 'placed-tattoo';
+      el.style.left = x + 'px';
+      el.style.top  = y + 'px';
+      el.innerHTML  = `
+        <img src="${src}" alt="Tattoo ${id}" />
+        <button class="tattoo-delete" onclick="removeTattoo(this.parentElement, '${src}')">&#215;</button>
+      `;
+
+      makeDraggable(el);
+      canvas.appendChild(el);
+
+      placed.push({ id, src, el });
+      updateFooter();
+    }
+
+    // ---- Drag placed tattoos around canvas ----
+    function makeDraggable(el) {
+      let startX, startY, origX, origY;
+
+      function onMouseDown(e) {
+        if (e.target.classList.contains('tattoo-delete')) return;
+        e.preventDefault();
+        startX = e.clientX;
+        startY = e.clientY;
+        origX  = parseInt(el.style.left);
+        origY  = parseInt(el.style.top);
+        el.style.zIndex = 10;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup',   onMouseUp);
+      }
+
+      function onMouseMove(e) {
+        const rect = canvas.getBoundingClientRect();
+        const nx = clamp(origX + e.clientX - startX, 0, rect.width  - 120);
+        const ny = clamp(origY + e.clientY - startY, 0, rect.height - 120);
+        el.style.left = nx + 'px';
+        el.style.top  = ny + 'px';
+      }
+
+      function onMouseUp() {
+        el.style.zIndex = '';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup',   onMouseUp);
+      }
+
+      // Touch move on canvas
+      el.addEventListener('touchstart', e => {
+        if (e.target.classList.contains('tattoo-delete')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const t = e.touches[0];
+        startX = t.clientX; startY = t.clientY;
+        origX  = parseInt(el.style.left);
+        origY  = parseInt(el.style.top);
+
+        function onTouchMove(e) {
+          e.preventDefault();
+          const t = e.touches[0];
+          const rect = canvas.getBoundingClientRect();
+          el.style.left = clamp(origX + t.clientX - startX, 0, rect.width  - 120) + 'px';
+          el.style.top  = clamp(origY + t.clientY - startY, 0, rect.height - 120) + 'px';
+        }
+        function onTouchEnd() {
+          el.removeEventListener('touchmove', onTouchMove);
+          el.removeEventListener('touchend',  onTouchEnd);
+        }
+        el.addEventListener('touchmove', onTouchMove, { passive: false });
+        el.addEventListener('touchend',  onTouchEnd);
+      }, { passive: false });
+
+      el.addEventListener('mousedown', onMouseDown);
+    }
+
+    // ---- Remove a tattoo ----
+    function removeTattoo(el, src) {
+      placed = placed.filter(p => p.el !== el);
+      el.remove();
+      if (placed.length === 0) hint.style.display = '';
+      updateFooter();
+    }
+
+    // ---- Clear all ----
+    function clearCanvas() {
+      placed.forEach(p => p.el.remove());
+      placed = [];
+      hint.style.display = '';
+      updateFooter();
+    }
+
+    // ---- Update footer count & button ----
+    function updateFooter() {
+      const n = placed.length;
+      countEl.textContent = n === 0 ? '0 tattoos placed'
+                          : n === 1 ? '1 tattoo placed'
+                          : `${n} tattoos placed`;
+      addBtn.disabled = n === 0;
+    }
+
+    // ---- Add composition to cart ----
+    function addCompositionToCart() {
+      if (placed.length === 0) return;
+
+      // Add each tattoo in the composition as a separate cart line
+      placed.forEach(p => {
+        Cart.addItem(
+          `tattoo-${p.id}`,
+          `Wall Tattoo ${p.id}`,
+          COMPOSITION_PRICE,
+          p.src
+        );
+      });
+
+      Cart.openDrawer();
+    }
+
+    // ---- Helpers ----
+    function clamp(val, min, max) {
+      return Math.min(Math.max(val, min), max);
+    }
+  </script>
+</body>
+</html>
