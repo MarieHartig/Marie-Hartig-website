@@ -260,10 +260,10 @@
   .collection-grid {
     order: 2;
     height: auto;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
   .collection-grid-item {
-    aspect-ratio: 1/1;
+    aspect-ratio: 4/3;
   }
   .collection-footer { flex-direction: column; gap: 0.5rem; text-align: center; }
 }
