@@ -15,7 +15,7 @@ const SLIDES = [
   { src: 'assets/images/portfolio/01 OPENING PAGE/open-page-10.jpg' },
 ];
 
-const INTERVAL = 3600;
+const INTERVAL = 2500;
 
 class Slideshow {
   constructor() {
